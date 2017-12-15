@@ -153,7 +153,7 @@ trait ObjectModelExtraTrait {
 				continue;
 			}
 
-			$message = $this->validateFieldsExtra($field, $this->$field);
+			$message = $this->validateFieldExtra($field, $this->$field);
 			if ($message !== true) {
 				if ($die) {
 					throw new PrestaShopException($message);
@@ -249,5 +249,128 @@ trait ObjectModelExtraTrait {
 		}
 
 		return $result;
+	}
+
+	/**
+	 * Validate a single field
+	 *
+	 * @since 1.5.0.1
+	 * @param string   $field        Field name
+	 * @param mixed    $value        Field value
+	 * @param int|null $id_lang      Language ID
+	 * @param array    $skip         Array of fields to skip.
+	 * @param bool     $human_errors If true, uses more descriptive, translatable error strings.
+	 *
+	 * @return true|string True or error message string.
+	 * @throws PrestaShopException
+	 */
+	public function validateFieldExtra($field, $value, $id_lang = null, $skip = array(), $human_errors = false)
+	{
+		static $ps_lang_default = null;
+		static $ps_allow_html_iframe = null;
+
+		if ($ps_lang_default === null) {
+			$ps_lang_default = Configuration::get('PS_LANG_DEFAULT');
+		}
+
+		if ($ps_allow_html_iframe === null) {
+			$ps_allow_html_iframe = (int)Configuration::get('PS_ALLOW_HTML_IFRAME');
+		}
+
+
+		$this->cacheFieldsRequiredDatabase();
+		$data = $this->def_extra['fields'][$field];
+
+
+
+		// Check if field is required
+		$required_fields = (isset(self::$fieldsRequiredDatabase[get_class($this)])) ? self::$fieldsRequiredDatabase[get_class($this)] : array();
+		if (!$id_lang || $id_lang == $ps_lang_default) {
+			if (!in_array('required', $skip) && (!empty($data['required']) || in_array($field, $required_fields))) {
+				if (Tools::isEmpty($value)) {
+					if ($human_errors) {
+						return $this->trans('The %s field is required.', array($this->displayFieldName($field, get_class($this))), 'Admin.Notifications.Error');
+					} else {
+						return $this->trans('Property %s is empty.', array(get_class($this).'->'.$field), 'Admin.Notifications.Error');
+					}
+				}
+			}
+		}
+
+		// Default value
+		if (!$value && !empty($data['default'])) {
+			$value = $data['default'];
+			$this->$field = $value;
+		}
+
+		// Check field values
+		if (!in_array('values', $skip) && !empty($data['values']) && is_array($data['values']) && !in_array($value, $data['values'])) {
+			return $this->trans('Property %1$s has a bad value (allowed values are: %2$s).', array(get_class($this).'->'.$field, implode(', ', $data['values'])), 'Admin.Notifications.Error');
+		}
+
+		// Check field size
+		if (!in_array('size', $skip) && !empty($data['size'])) {
+			$size = $data['size'];
+			if (!is_array($data['size'])) {
+				$size = array('min' => 0, 'max' => $data['size']);
+			}
+
+			$length = Tools::strlen($value);
+			if ($length < $size['min'] || $length > $size['max']) {
+				if ($human_errors) {
+					if (isset($data['lang']) && $data['lang']) {
+						$language = new Language((int)$id_lang);
+						return $this->trans('Your entry in field %1$s (language %2$s) exceeds max length %3$d chars (incl. html tags).', array($this->displayFieldName($field, get_class($this)), $language->name, $size['max']), 'Admin.Notifications.Error');
+					} else {
+						return $this->trans('The %1$s field is too long (%2$d chars max).', array($this->displayFieldName($field, get_class($this)), $size['max']), 'Admin.Notifications.Error');
+					}
+				} else {
+					return $this->trans('The length of property %1$s is currently %2$d chars. It must be between %3$d and %4$d chars.',
+						array(
+							get_class($this).'->'.$field,
+							$length,
+							$size['min'],
+							$size['max'],
+						),
+						'Admin.Notifications.Error'
+					);
+				}
+			}
+		}
+
+		// Check field validator
+		if (!in_array('validate', $skip) && !empty($data['validate'])) {
+			if (!method_exists('Validate', $data['validate'])) {
+				throw new PrestaShopException(
+					$this->trans(
+						'Validation function not found: %s.',
+						array($data['validate']),
+						'Admin.Notifications.Error'
+					)
+				);
+			}
+
+			if (!empty($value)) {
+				$res = true;
+				if (Tools::strtolower($data['validate']) == 'iscleanhtml') {
+					if (!call_user_func(array('Validate', $data['validate']), $value, $ps_allow_html_iframe)) {
+						$res = false;
+					}
+				} else {
+					if (!call_user_func(array('Validate', $data['validate']), $value)) {
+						$res = false;
+					}
+				}
+				if (!$res) {
+					if ($human_errors) {
+						return $this->trans('The %s field is invalid.', array($this->displayFieldName($field, get_class($this))), 'Admin.Notifications.Error');
+					} else {
+						return $this->trans('Property %s is not valid', array(get_class($this).'->'.$field), 'Admin.Notifications.Error');
+					}
+				}
+			}
+		}
+
+		return true;
 	}
 }
