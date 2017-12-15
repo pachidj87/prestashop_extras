@@ -6,7 +6,8 @@
     "authors": [
         {
             "name": "DSIELAB",
-            "email": "dsielab@dsielab.com"
+            "email": "dsielab@dsielab.com",
+            "homepage": "http://dsielab.com"
         }
     ],
     "require": {
@@ -14,10 +15,5 @@
     },
     "autoload": {
         "psr-4": { "DSIELAB\\Prestashop\\Extra\\": "src/" }
-    },
-    "extra": {
-        "branch-alias": {
-            "dev-master": "master-dev"
-        }
     }
 }
