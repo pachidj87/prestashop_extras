@@ -44,7 +44,7 @@ trait ObjectModelExtraTrait {
 		parent::__construct($id, $id_lang, $id_shop, $translator);
 
 		$class_name = get_class($this);
-		if (!isset(ObjectModel::$loaded_classes[$class_name])) {
+		if (isset(ObjectModel::$loaded_classes[$class_name]) && $this->def_extra === null) {
 			$this->def_extra = ObjectModel::getDefinitionExtra($class_name);
 			if (!Validate::isTableOrIdentifier($this->def_extra['primary']) || !Validate::isTableOrIdentifier($this->def_extra['table'])) {
 				throw new PrestaShopException('Identifier or table format not valid for class '.$class_name.' in extra fields');
