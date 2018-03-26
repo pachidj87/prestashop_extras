@@ -252,6 +252,41 @@ trait ObjectModelExtraTrait {
 	}
 
 	/**
+	 * Updates the current object in the database
+	 *
+	 * @param bool $null_values
+	 *
+	 * @return bool Insertion result
+	 * @throws PrestaShopException
+	 * @throws \PrestaShopDatabaseException
+	 */
+	public function update($null_values = false) {
+		$result = parent::update($null_values);
+
+		if (!$result &= Db::getInstance()->update($this->def_extra['table'], $this->getFieldsExtra(), '`'.pSQL($this->def_extra['primary']).'` = '.(int)$this->id, 0, $null_values)) {
+			return false;
+		}
+
+		return $result;
+	}
+
+	/**
+	 * Deletes current object from database
+	 *
+	 * @return bool True if delete was successful
+	 * @throws PrestaShopException
+	 */
+	public function delete() {
+		$result = parent::delete();
+
+		if (!$result &= Db::getInstance()->delete($this->def_extra['table'], '`'.bqSQL($this->def['primary']).'` = '.(int)$this->id)) {
+			return false;
+		}
+
+		return $result;
+	}
+
+	/**
 	 * Validate a single field
 	 *
 	 * @since 1.5.0.1
