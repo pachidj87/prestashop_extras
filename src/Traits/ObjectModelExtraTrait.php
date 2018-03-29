@@ -1,11 +1,4 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: ahechevarria
- * Date: 3/12/17
- * Time: 23:11
- */
-
 namespace DSIELAB\Prestashop\Extras\Traits;
 
 use PrestaShop\PrestaShop\Adapter\Entity\Cache;
@@ -29,17 +22,18 @@ trait ObjectModelExtraTrait {
 	public $def_extra;
 	public $update_fields_extra;
 
-	/**
-	 * ObjectModelExtraTrait constructor.
-	 *
-	 * @param null $id
-	 * @param null $id_lang
-	 * @param null $id_shop
-	 * @param null $translator
-	 *
-	 * @throws PrestaShopException
-	 * @throws \PrestaShop\PrestaShop\Adapter\CoreException
-	 */
+    /**
+     * ObjectModelExtraTrait constructor.
+     *
+     * @param null $id
+     * @param null $id_lang
+     * @param null $id_shop
+     * @param null $translator
+     *
+     * @throws PrestaShopException
+     * @throws \PrestaShop\PrestaShop\Adapter\CoreException
+     * @throws \ReflectionException
+     */
 	public function __construct($id = null, $id_lang = null, $id_shop = null, $translator = null) {
 		parent::__construct($id, $id_lang, $id_shop, $translator);
 
@@ -66,14 +60,15 @@ trait ObjectModelExtraTrait {
 		$this->is_virtual = true;
 	}
 
-	/**
-	 * Returns object definition
-	 *
-	 * @param string      $class Name of object
-	 * @param string|null $field Name of field if we want the definition of one field only
-	 *
-	 * @return array|bool
-	 */
+    /**
+     * Returns object definition
+     *
+     * @param string $class Name of object
+     * @param string|null $field Name of field if we want the definition of one field only
+     *
+     * @return array|bool
+     * @throws \ReflectionException
+     */
 	public static function getDefinitionExtra($class, $field = null) {
 		if (is_object($class)) {
 			$class = get_class($class);
