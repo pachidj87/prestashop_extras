@@ -19,6 +19,7 @@ use ReflectionClass;
 trait ObjectModelExtraTrait {
 
 	public static $definition_extra;
+	public static $full_load = false;
 	public $def_extra;
 	public $update_fields_extra;
 
@@ -54,7 +55,8 @@ trait ObjectModelExtraTrait {
 
 		if ($id) {
 			$entity_mapper = ServiceLocator::get("\\PrestaShop\\PrestaShop\\Adapter\\EntityMapper");
-			$entity_mapper->load($id, $id_lang, $this, $this->def_extra, $this->id_shop, self::$cache_objects);
+			$entity_mapper->load($id, $id_lang, $this, $this->def_extra, $this->id_shop, self::$cache_objects && self::$full_load);
+			self::$full_load = true;
 		}
 
 		$this->is_virtual = true;
