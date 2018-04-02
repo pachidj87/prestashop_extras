@@ -1,6 +1,7 @@
 <?php
 namespace DSIELAB\Prestashop\Extras\Traits;
 
+use PrestaShop\PrestaShop\Adapter\Entity\Db;
 
 trait ObjectModelTrait
 {
