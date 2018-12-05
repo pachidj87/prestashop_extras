@@ -18,7 +18,7 @@ use ReflectionClass;
  */
 trait ObjectModelExtraTrait {
 
-	public static $definition_extra;
+	public static $definition_extra = array();
 	public static $full_load = false;
 	public $def_extra;
 	public $update_fields_extra;
