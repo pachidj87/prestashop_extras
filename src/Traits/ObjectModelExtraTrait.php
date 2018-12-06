@@ -42,7 +42,7 @@ trait ObjectModelExtraTrait {
 		// Loading extra definitions
 		if (isset(ObjectModel::$loaded_classes[$class_name]) && $this->def_extra === null) {
 			$this->def_extra = self::getDefinitionExtra($class_name);
-			if (isset($this->def_extra['primary']) && !Validate::isTableOrIdentifier($this->def_extra['primary']) || !Validate::isTableOrIdentifier($this->def_extra['table'])) {
+			if (isset($this->def_extra['primary']) && (!Validate::isTableOrIdentifier($this->def_extra['primary']) || !Validate::isTableOrIdentifier($this->def_extra['table']))) {
 				throw new PrestaShopException('Identifier or table format not valid for class '.$class_name.' in extra fields');
 			}
 
