@@ -42,7 +42,7 @@ trait ObjectModelExtraTrait {
 		// Loading extra definitions
 		if (isset(ObjectModel::$loaded_classes[$class_name]) && $this->def_extra === null) {
 			$this->def_extra = self::getDefinitionExtra($class_name);
-			if (!Validate::isTableOrIdentifier($this->def_extra['primary']) || !Validate::isTableOrIdentifier($this->def_extra['table'])) {
+			if (isset($this->def_extra['primary']) && !Validate::isTableOrIdentifier($this->def_extra['primary']) || !Validate::isTableOrIdentifier($this->def_extra['table'])) {
 				throw new PrestaShopException('Identifier or table format not valid for class '.$class_name.' in extra fields');
 			}
 
@@ -123,7 +123,7 @@ trait ObjectModelExtraTrait {
 		$fields = $this->formatFieldsExtra(self::FORMAT_COMMON);
 
 		// Ensure that we get something to insert
-		if (!$fields && isset($this->id) && Validate::isUnsignedId($this->id)) {
+		if (isset($this->def_extra['primary']) && !$fields && isset($this->id) && Validate::isUnsignedId($this->id)) {
 			$fields[$this->def_extra['primary']] = $this->id;
 		}
 
@@ -141,23 +141,25 @@ trait ObjectModelExtraTrait {
 	 */
 	public function validateFieldsExtra($die = true, $error_return = false)
 	{
-		foreach ($this->def_extra['fields'] as $field => $data) {
-			if (!empty($data['lang'])) {
-				continue;
-			}
+	    if (isset($this->def_extra['primary'])) {
+            foreach ($this->def_extra['fields'] as $field => $data) {
+                if (!empty($data['lang'])) {
+                    continue;
+                }
 
-			if (is_array($this->update_fields_extra) && empty($this->update_fields_extra[$field]) && isset($this->def_extra['fields'][$field]['shop']) && $this->def_extra['fields'][$field]['shop']) {
-				continue;
-			}
+                if (is_array($this->update_fields_extra) && empty($this->update_fields_extra[$field]) && isset($this->def_extra['fields'][$field]['shop']) && $this->def_extra['fields'][$field]['shop']) {
+                    continue;
+                }
 
-			$message = $this->validateFieldExtra($field, $this->$field);
-			if ($message !== true) {
-				if ($die) {
-					throw new PrestaShopException($message);
-				}
-				return $error_return ? $message : false;
-			}
-		}
+                $message = $this->validateFieldExtra($field, $this->$field);
+                if ($message !== true) {
+                    if ($die) {
+                        throw new PrestaShopException($message);
+                    }
+                    return $error_return ? $message : false;
+                }
+            }
+        }
 
 		return true;
 	}
@@ -187,6 +189,10 @@ trait ObjectModelExtraTrait {
 	protected function formatFieldsExtra($type, $id_lang = null)
 	{
 		$fields = array();
+
+		if (!isset($this->def_extra['primary'])) {
+		    return $fields;
+        }
 
 		// Set primary key in fields
 		if (isset($this->id)) {
@@ -241,7 +247,7 @@ trait ObjectModelExtraTrait {
 	public function add($auto_date = true, $null_values = false) {
 		$result = parent::add($auto_date, $null_values);
 
-		if (!$result &= Db::getInstance()->insert($this->def_extra['table'], $this->getFieldsExtra(), $null_values)) {
+		if (isset($this->def_extra['primary']) && (!$result &= Db::getInstance()->insert($this->def_extra['table'], $this->getFieldsExtra(), $null_values))) {
 			return false;
 		}
 
@@ -260,7 +266,7 @@ trait ObjectModelExtraTrait {
 	public function update($null_values = false) {
 		$result = parent::update($null_values);
 
-		if (!$result &= Db::getInstance()->update($this->def_extra['table'], $this->getFieldsExtra(), '`'.pSQL($this->def_extra['primary']).'` = '.(int)$this->id, 0, $null_values)) {
+		if (isset($this->def_extra['primary']) && (!$result &= Db::getInstance()->update($this->def_extra['table'], $this->getFieldsExtra(), '`'.pSQL($this->def_extra['primary']).'` = '.(int)$this->id, 0, $null_values))) {
 			return false;
 		}
 
@@ -276,7 +282,7 @@ trait ObjectModelExtraTrait {
 	public function delete() {
 		$result = parent::delete();
 
-		if (!$result &= Db::getInstance()->delete($this->def_extra['table'], '`'.bqSQL($this->def['primary']).'` = '.(int)$this->id)) {
+		if (isset($this->def_extra['primary']) && (!$result &= Db::getInstance()->delete($this->def_extra['table'], '`'.bqSQL($this->def['primary']).'` = '.(int)$this->id))) {
 			return false;
 		}
 
@@ -298,6 +304,10 @@ trait ObjectModelExtraTrait {
 	 */
 	public function validateFieldExtra($field, $value, $id_lang = null, $skip = array(), $human_errors = false)
 	{
+	    if (!isset($this->def_extra['fields'])) {
+	        return true;
+        }
+
 		static $ps_lang_default = null;
 		static $ps_allow_html_iframe = null;
 
