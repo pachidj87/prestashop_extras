@@ -38,6 +38,10 @@ trait ObjectModelExtraTrait {
 	public function __construct($id = null, $id_lang = null, $id_shop = null, $translator = null) {
 		parent::__construct($id, $id_lang, $id_shop, $translator);
 
+		if (empty(self::$definition_extra)) {
+		    return;
+        }
+
 		$class_name = get_class($this);
 		// Loading extra definitions
 		if (isset(ObjectModel::$loaded_classes[$class_name]) && $this->def_extra === null) {
