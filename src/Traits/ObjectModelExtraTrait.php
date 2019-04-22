@@ -17,10 +17,19 @@ use ReflectionClass;
  * @package ZumbIn\Core\Traits
  */
 trait ObjectModelExtraTrait {
+    /**
+     * @var bool
+     */
+    public static $full_load = false;
 
-	public static $definition_extra = array();
-	public static $full_load = false;
+    /**
+     * @var array|bool
+     */
 	public $def_extra;
+
+    /**
+     * @var
+     */
 	public $update_fields_extra;
 
     /**
@@ -38,7 +47,9 @@ trait ObjectModelExtraTrait {
 	public function __construct($id = null, $id_lang = null, $id_shop = null, $translator = null) {
 		parent::__construct($id, $id_lang, $id_shop, $translator);
 
-		if (empty(self::$definition_extra)) {
+		$reflexion = new ReflectionClass(get_class($this));
+
+		if (!$reflexion->hasProperty('definition_extra')) {
 		    return;
         }
 
