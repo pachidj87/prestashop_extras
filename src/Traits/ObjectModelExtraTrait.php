@@ -445,6 +445,7 @@ trait ObjectModelExtraTrait {
      */
     public function getWebserviceParameters($ws_params_attribute_name = null) {
         $resource_parameters = parent::getWebserviceParameters($ws_params_attribute_name);
+        $required_fields = $this->getCachedFieldsRequiredDatabase();
 
         foreach ($this->def_extra['fields'] as $field_name => $details) {
             if (!isset($resource_parameters['fields'][$field_name])) {
@@ -478,5 +479,7 @@ trait ObjectModelExtraTrait {
                 $resource_parameters['fields'][$field_name]['modifier'] = $details['ws_modifier'];
             }
         }
+
+        return $resource_parameters;
     }
 }
