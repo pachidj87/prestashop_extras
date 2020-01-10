@@ -70,6 +70,11 @@ trait ObjectModelExtraTrait {
 
 		if ($id) {
 			$entity_mapper = ServiceLocator::get("\\PrestaShop\\PrestaShop\\Adapter\\EntityMapper");
+            // Update object data
+            $cache_id = 'objectmodel_' . $this->def_extra['classname'] . '_' . (int) $id . '_' . (int) $id_shop . '_' . (int) $id_lang;
+            if (Cache::isStored($cache_id)) {
+                Cache::clean($cache_id);
+            }
 			$entity_mapper->load($id, $id_lang, $this, $this->def_extra, $this->id_shop, self::$cache_objects && self::$full_load);
 			self::$full_load = true;
 		}
@@ -430,4 +435,48 @@ trait ObjectModelExtraTrait {
 
 		return true;
 	}
+
+    /**
+     * Returns webservice parameters of this object.
+     *
+     * @param string|null $ws_params_attribute_name
+     *
+     * @return array
+     */
+    public function getWebserviceParameters($ws_params_attribute_name = null) {
+        $resource_parameters = parent::getWebserviceParameters($ws_params_attribute_name);
+
+        foreach ($this->def_extra['fields'] as $field_name => $details) {
+            if (!isset($resource_parameters['fields'][$field_name])) {
+                $resource_parameters['fields'][$field_name] = array();
+            }
+            $current_field = array();
+            $current_field['sqlId'] = $field_name;
+            if (isset($details['size'])) {
+                $current_field['maxSize'] = $details['size'];
+            }
+            if (isset($details['lang'])) {
+                $current_field['i18n'] = $details['lang'];
+            } else {
+                $current_field['i18n'] = false;
+            }
+            if ((isset($details['required']) && $details['required'] === true) || in_array($field_name, $required_fields)) {
+                $current_field['required'] = true;
+            } else {
+                $current_field['required'] = false;
+            }
+            if (isset($details['validate'])) {
+                $current_field['validateMethod'] = (
+                array_key_exists('validateMethod', $resource_parameters['fields'][$field_name]) ?
+                    array_merge($resource_parameters['fields'][$field_name]['validateMethod'], array($details['validate'])) :
+                    array($details['validate'])
+                );
+            }
+            $resource_parameters['fields'][$field_name] = array_merge($resource_parameters['fields'][$field_name], $current_field);
+
+            if (isset($details['ws_modifier'])) {
+                $resource_parameters['fields'][$field_name]['modifier'] = $details['ws_modifier'];
+            }
+        }
+    }
 }
