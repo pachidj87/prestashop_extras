@@ -503,7 +503,7 @@ trait ObjectModelExtraTrait {
         $assoc_extra = isset($this->def_extra) ? $this->def_extra['table'] : false;
 
         if ($assoc_extra) {
-            $sql_join .= ' LEFT JOIN `'._DB_PREFIX_ . bqSQL($this->def_extra['table']) .'_extra` AS `main_extra`';
+            $sql_join .= ' LEFT JOIN `'._DB_PREFIX_ . bqSQL($this->def_extra['table']) .'` AS `main_extra`';
         }
 
         $class_name = WebserviceRequest::$ws_current_classname;
