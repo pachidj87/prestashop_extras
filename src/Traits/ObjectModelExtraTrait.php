@@ -10,6 +10,7 @@ use PrestaShop\PrestaShop\Adapter\Entity\PrestaShopException;
 use PrestaShop\PrestaShop\Adapter\Entity\Tools;
 use PrestaShop\PrestaShop\Adapter\Entity\Validate;
 use PrestaShop\PrestaShop\Adapter\ServiceLocator;
+use PrestaShopDatabaseException;
 use ReflectionClass;
 
 /**
@@ -481,5 +482,59 @@ trait ObjectModelExtraTrait {
         }
 
         return $resource_parameters;
+    }
+
+    /**
+     * Returns webservice object list.
+     *
+     * @param string $sql_join
+     * @param string $sql_filter
+     * @param string $sql_sort
+     * @param string $sql_limit
+     *
+     * @return array|null
+     *
+     * @throws PrestaShopDatabaseException
+     */
+    public function getWebserviceObjectList($sql_join, $sql_filter, $sql_sort, $sql_limit)
+    {
+        $assoc = Shop::getAssoTable($this->def['table']);
+        $assoc_extra = isset($this->def_extra) ? $this->def_extra['table'] : false;
+
+        if ($assoc_extra) {
+            $sql_join .= ' LEFT JOIN `'._DB_PREFIX_ . bqSQL($this->def_extra['table']) .'_extra` AS `main_extra`';
+        }
+
+        $class_name = WebserviceRequest::$ws_current_classname;
+        $vars = get_class_vars($class_name);
+        if ($assoc !== false) {
+            if ($assoc['type'] !== 'fk_shop') {
+                $multi_shop_join = ' LEFT JOIN `' . _DB_PREFIX_ . bqSQL($this->def['table']) . '_' . bqSQL($assoc['type']) . '`
+										AS `multi_shop_' . bqSQL($this->def['table']) . '`
+										ON (main.`' . bqSQL($this->def['primary']) . '` = `multi_shop_' . bqSQL($this->def['table']) . '`.`' . bqSQL($this->def['primary']) . '`)';
+                $sql_filter = 'AND `multi_shop_' . bqSQL($this->def['table']) . '`.id_shop = ' . Context::getContext()->shop->id . ' ' . $sql_filter;
+                $sql_join = $multi_shop_join . ' ' . $sql_join;
+            } else {
+                $vars = get_class_vars($class_name);
+                foreach ($vars['shopIDs'] as $id_shop) {
+                    $or[] = '(main.id_shop = ' . (int) $id_shop . (isset($this->def['fields']['id_shop_group']) ? ' OR (id_shop = 0 AND id_shop_group=' . (int) Shop::getGroupFromShop((int) $id_shop) . ')' : '') . ')';
+                }
+
+                $prepend = '';
+                if (count($or)) {
+                    $prepend = 'AND (' . implode('OR', $or) . ')';
+                }
+                $sql_filter = $prepend . ' ' . $sql_filter;
+            }
+        }
+
+        $query = '
+		SELECT DISTINCT main.`' . bqSQL($this->def['primary']) . '` FROM `' . _DB_PREFIX_ . bqSQL($this->def['table']) . '` AS main
+		' . $sql_join . '
+		WHERE 1 ' . $sql_filter . '
+		' . ($sql_sort != '' ? $sql_sort : '') . '
+		' . ($sql_limit != '' ? $sql_limit : '');
+
+        return Db::getInstance(_PS_USE_SQL_SLAVE_)->executeS($query);
     }
 }
