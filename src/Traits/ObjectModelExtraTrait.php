@@ -75,7 +75,7 @@ trait ObjectModelExtraTrait {
             if (Cache::isStored($cache_id)) {
                 Cache::clean($cache_id);
             }
-			$entity_mapper->load($id, $id_lang, $this, $this->def_extra, $this->id_shop, self::$cache_objects && self::$full_load);
+			$entity_mapper->load($id, $id_lang, $this, $this->def_extra, $id_shop, self::$cache_objects && self::$full_load);
 			self::$full_load = true;
 		}
 
