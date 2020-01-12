@@ -11,6 +11,7 @@ use PrestaShop\PrestaShop\Adapter\Entity\Tools;
 use PrestaShop\PrestaShop\Adapter\Entity\Shop;
 use PrestaShop\PrestaShop\Adapter\Entity\Validate;
 use PrestaShop\PrestaShop\Adapter\ServiceLocator;
+use WebserviceRequest;
 use PrestaShopDatabaseException;
 use ReflectionClass;
 
